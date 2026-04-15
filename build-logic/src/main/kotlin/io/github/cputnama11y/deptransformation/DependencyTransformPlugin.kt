@@ -64,7 +64,7 @@ class DependencyTransformPlugin : Plugin<Project> {
                                     this.requireCapability("${it.group}:${it.name}")
                                 }
                                 (requested as? ModuleComponentSelector)?.let {
-                                    this.requireCapability("${it.moduleIdentifier.group}: ${it.moduleIdentifier.name}")
+                                    this.requireCapability("${it.moduleIdentifier.group}:${it.moduleIdentifier.name}")
                                 }
                             }
                         })

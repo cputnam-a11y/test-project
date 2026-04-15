@@ -48,12 +48,6 @@ abstract class TransformedModuleDependency constructor(
     @get:Inject
     protected abstract val configurations: ConfigurationContainer
 
-    @get:Inject
-    protected abstract val projectArtifacts: ArtifactHandler
-
-    @get:Inject
-    protected abstract val dependencyFactory: DependencyFactory
-
     private val inputConfiguration = configurations.register(
         "transformationInputFor${baseCapability.name}#${nextID.getAndIncrement()}"
     ) {
@@ -70,14 +64,14 @@ abstract class TransformedModuleDependency constructor(
             return@flatMap it.incoming.artifacts.resolvedArtifacts.map {
                 it.find { artifact ->
                     artifact.variant.capabilities.any {
-                        Capability.from(it).equals(baseCapability)
+                        Capability.from(it) == baseCapability
                     } && otherCaps.all { otherCap ->
                         artifact.variant.capabilities.any {
-                            Capability.from(it).equals(otherCap)
+                            Capability.from(it) == otherCap
                         }
                     }
                 }?.file
-            }
+             }
         }.map(FileToRegularFileTransformer.create(objects)))
         classpathArtifacts.from(inputConfiguration.flatMap {
             return@flatMap it.incoming.artifacts.resolvedArtifacts.map {
@@ -107,7 +101,7 @@ abstract class TransformedModuleDependency constructor(
             }
             attributes {
                 attribute(Usage.USAGE_ATTRIBUTE, objects.named(Usage.JAVA_RUNTIME))
-                attribute(Category.CATEGORY_ATTRIBUTE, objects.named(Category.DOCUMENTATION))
+                attribute(Category.CATEGORY_ATTRIBUTE, objects.named(Category.LIBRARY))
                 attribute(LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE, objects.named(LibraryElements.JAR))
             }
             outgoing {

@@ -28,7 +28,8 @@ abstract class TransformationTask : DefaultTask() {
     @get:OutputFile
     abstract val outputFile: RegularFileProperty
 
-    @get:Input
+//    @get:Input
+    @get:Nested
     abstract val transformers: ListProperty<Transformer>
 
     @get:Internal
@@ -46,12 +47,17 @@ abstract class TransformationTask : DefaultTask() {
             context.outputPath.set(getTempFile())
         }
         Files.copy(
+            context.inputPath.get().asFile.toPath(),
+            context.outputPath.get().asFile.toPath(),
+            StandardCopyOption.REPLACE_EXISTING
+        )
+        Files.copy(
             context.outputPath.get().asFile.toPath(),
             outputFile.get().asFile.toPath(),
             StandardCopyOption.REPLACE_EXISTING
         )
     }
-
+    @Internal
     fun getTempFile() = temporaryDir.resolve("temp-${nextFileID++}")
 
     interface Context : Transformer.Context {

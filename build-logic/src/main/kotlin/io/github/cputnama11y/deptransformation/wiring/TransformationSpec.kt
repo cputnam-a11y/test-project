@@ -7,8 +7,10 @@ import org.gradle.api.NamedDomainObjectProvider
 import org.gradle.api.artifacts.*
 import org.gradle.api.model.ObjectFactory
 import org.gradle.api.tasks.Nested
+import com.google.common.base.Suppliers
 import org.gradle.kotlin.dsl.newInstance
 import java.util.*
+import java.util.function.Supplier
 import javax.inject.Inject
 
 abstract class TransformationSpec {
@@ -37,24 +39,22 @@ abstract class TransformationSpec {
 
     fun dependencies(action: Action<in TransformationDependencies>) = action.execute(dependencies)
 
-    @JvmOverloads
-    fun addTo(conf: NamedDomainObjectProvider<Configuration>, configure: Action<in Dependency> = Action({})) {
-        val dependencies = collectorConfig.map {
-            it.dependencies.flatMap {
-                when (it) {
-                    is ModuleDependency -> objects.newInstance<TransformedModuleDependency>(it, transformers)
-                        .getActualDependencies()
+    val deps: Supplier<List<Dependency>> = Suppliers.memoize {
+        collectorConfig.get().dependencies.flatMap {
+            when (it) {
+                is ModuleDependency -> objects.newInstance<TransformedModuleDependency>(it, transformers)
+                    .getActualDependencies()
 
-                    is FileCollectionDependency -> TODO() // TODO specialize for FileCollectionDependency
-                    else -> throw IllegalStateException("Expected Regular Dependency")
-                }
-            }.map {
-                configure.execute(it)
-                it
+                is FileCollectionDependency -> TODO() // TODO specialize for FileCollectionDependency
+                else -> throw IllegalStateException("Expected Regular Dependency")
             }
         }
+    }
+
+    fun addTo(conf: NamedDomainObjectProvider<Configuration>) {
+        deps.get()
         conf.configure {
-            this.dependencies.addAllLater(dependencies)
+            this.dependencies.addAll(deps.get())
         }
     }
 }
